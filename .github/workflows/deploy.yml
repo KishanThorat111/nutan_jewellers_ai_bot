@@ -1,0 +1,49 @@
+# .github/workflows/deploy.yml
+name: Build and Deploy Nutan's Bot
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKERHUB_REPO: kishanthorat111/nutans-bot # <-- New Docker Hub Repo
+
+jobs:
+  # ... (The build-and-push job is identical, no changes needed) ...
+  build-and-push:
+    name: Build and Push to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.DOCKERHUB_REPO }}:${{ github.sha }}, ${{ env.DOCKERHUB_REPO }}:latest
+
+  deploy-to-k3s:
+    name: Deploy to K3s on VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+    - name: Deploy via SSH using kubectl
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          echo "🚀 Updating Kubernetes deployment for Nalabheema's Bot..."
+          # This command now targets the new deployment in the new namespace
+          kubectl set image deployment/nalabheemas-bot-deployment bot-container=${{ env.DOCKERHUB_REPO }}:${{ github.sha }} --namespace nalabheemas-bot
+          echo "✅ Deployment update triggered successfully!"
