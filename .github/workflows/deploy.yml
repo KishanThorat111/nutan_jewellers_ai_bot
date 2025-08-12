@@ -42,8 +42,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          echo "🚀 Updating Kubernetes deployment for Nalabheema's Bot..."
-          # This command now targets the new deployment in the new namespace
-          kubectl set image deployment/nalabheemas-bot-deployment bot-container=${{ env.DOCKERHUB_REPO }}:${{ github.sha }} --namespace nalabheemas-bot
-          echo "✅ Deployment update triggered successfully!"
+            export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+            echo "🚀 Updating Kubernetes deployment for Nutan's Jewellery Bot..." # <-- Cosmetic fix
+            # This command now targets the new deployment in the new namespace
+            kubectl set image deployment/nutans-bot-deployment bot-container=${{ env.DOCKERHUB_REPO }}:${{ github.sha }} --namespace nutans-bot # <-- CRITICAL FIX HERE
+            echo "✅ Deployment update triggered successfully!"
