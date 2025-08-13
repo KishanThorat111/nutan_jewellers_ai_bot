@@ -1,40 +1,84 @@
+# # kubernetes/deployment.yml
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nutans-bot-deployment  # <-- New Name
+#   namespace: nutans-bot       # <-- New Namespace
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nutans-bot # <-- New Label
+#   template:
+#     metadata:
+#       labels:
+#         app: nutans-bot # <-- New Label
+#     spec:
+#       containers:
+#       - name: bot-container # <-- New Container Name
+#         image: kishanthorat111/nutans-bot:latest # <-- New Docker Image
+#         resources: # Add resource limits for stability
+#           requests:
+#             memory: "128Mi"
+#             cpu: "100m"
+#           limits:
+#             memory: "512Mi"
+#             cpu: "500m"
+#         envFrom:
+#           - secretRef:
+#               name: nutans-secrets # <-- New Secret
+#         volumeMounts:
+#         - name: gcp-credentials-volume
+#           mountPath: /app/credentials.json
+#           subPath: credentials.json
+#       volumes:
+#       - name: gcp-credentials-volume
+#         secret:
+#           secretName: nutans-secrets # <-- New Secret
+#           items:
+#           - key: credentials.json
+#             path: credentials.json
+
 # kubernetes/deployment.yml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nutans-bot-deployment  # <-- New Name
-  namespace: nutans-bot       # <-- New Namespace
+  name: nutans-bot-deployment
+  namespace: nutans-bot
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nutans-bot # <-- New Label
+      app: nutans-bot
   template:
     metadata:
       labels:
-        app: nutans-bot # <-- New Label
+        app: nutans-bot
     spec:
+      # The 'imagePullSecrets' section is no longer needed here.
+      # Kubernetes will automatically use the 'dockerhub-creds' secret
+      # you created for any pod in this namespace.
       containers:
-      - name: bot-container # <-- New Container Name
-        image: kishanthorat111/nutans-bot:latest # <-- New Docker Image
-        resources: # Add resource limits for stability
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        envFrom:
-          - secretRef:
-              name: nutans-secrets # <-- New Secret
-        volumeMounts:
-        - name: gcp-credentials-volume
-          mountPath: /app/credentials.json
-          subPath: credentials.json
+        - name: bot-container
+          image: kishanthorat111/nutans-bot:latest
+          resources: # Resource limits for stability
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          envFrom:
+            - secretRef:
+                name: nutans-secrets
+          volumeMounts:
+            - name: gcp-credentials-volume
+              mountPath: /app/credentials.json
+              subPath: credentials.json
       volumes:
-      - name: gcp-credentials-volume
-        secret:
-          secretName: nutans-secrets # <-- New Secret
-          items:
-          - key: credentials.json
-            path: credentials.json
+        - name: gcp-credentials-volume
+          secret:
+            secretName: nutans-secrets
+            items:
+              - key: credentials.json
+                path: credentials.json
