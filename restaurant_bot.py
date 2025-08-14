@@ -1,65 +1,65 @@
-# from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-# from telegram.ext import Application, CallbackQueryHandler, ContextTypes
-# import database_manager as db
-# import services
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Application, CallbackQueryHandler, ContextTypes
+import database_manager as db
+import services
 
-# async def handle_order_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     """Handles the 'Confirm' or 'Reject' button presses from the restaurant staff."""
-#     query = update.callback_query
-#     await query.answer()
+async def handle_order_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles the 'Confirm' or 'Reject' button presses from the restaurant staff."""
+    query = update.callback_query
+    await query.answer()
 
-#     action, order_ref = query.data.split('_', 1)
-#     admin_user = query.from_user.full_name
+    action, order_ref = query.data.split('_', 1)
+    admin_user = query.from_user.full_name
 
-#     # FIX: Use context.application.bot_data to get the shared application object
-#     customer_app = context.application.bot_data.get('customer_app')
-#     if not customer_app:
-#         print("FATAL: Customer app not found in restaurant bot context!")
-#         await query.edit_message_caption(caption=query.message.caption + "\n\n❌ ERROR: COULD NOT NOTIFY CUSTOMER.", parse_mode='Markdown')
-#         return
+    # FIX: Use context.application.bot_data to get the shared application object
+    customer_app = context.application.bot_data.get('customer_app')
+    if not customer_app:
+        print("FATAL: Customer app not found in restaurant bot context!")
+        await query.edit_message_caption(caption=query.message.caption + "\n\n❌ ERROR: COULD NOT NOTIFY CUSTOMER.", parse_mode='Markdown')
+        return
 
-#     customer_chat_id = db.get_order_customer_id(order_ref)
-#     if not customer_chat_id:
-#         print(f"ERROR: Could not find customer ID for order {order_ref}")
-#         await query.edit_message_caption(caption=query.message.caption + f"\n\n❌ ERROR: Customer ID not found for order {order_ref}.", parse_mode='Markdown')
-#         return
+    customer_chat_id = db.get_order_customer_id(order_ref)
+    if not customer_chat_id:
+        print(f"ERROR: Could not find customer ID for order {order_ref}")
+        await query.edit_message_caption(caption=query.message.caption + f"\n\n❌ ERROR: Customer ID not found for order {order_ref}.", parse_mode='Markdown')
+        return
 
-#     if action == "confirm":
-#         db.update_order_status(order_ref, 'confirmed')
+    if action == "confirm":
+        db.update_order_status(order_ref, 'confirmed')
         
-#         await customer_app.bot.send_message(
-#             chat_id=customer_chat_id,
-#             text=f"🎉 Great news! Your order *#{order_ref}* has been *CONFIRMED* by the restaurant.\n\nIt's now being prepared and will be with you shortly. Thank you for your order!",
-#             parse_mode='Markdown'
-#         )
+        await customer_app.bot.send_message(
+            chat_id=customer_chat_id,
+            text=f"🎉 Great news! Your order *#{order_ref}* has been *CONFIRMED* by the restaurant.\n\nIt's now being prepared and will be with you shortly. Thank you for your order!",
+            parse_mode='Markdown'
+        )
         
-#         new_caption = query.message.caption + f"\n\n--- \n✅ *Confirmed* by {admin_user} ---"
-#         await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
-#         print(f"LOG: Order {order_ref} confirmed by {admin_user}.")
+        new_caption = query.message.caption + f"\n\n--- \n✅ *Confirmed* by {admin_user} ---"
+        await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
+        print(f"LOG: Order {order_ref} confirmed by {admin_user}.")
 
-#         # Schedule the Google Sheets sync
-#         order_details = db.get_order_details(order_ref)
-#         if order_details and context.application.job_queue:
-#              context.application.job_queue.run_once(services.sync_order_to_sheet, when=0, data=order_details)
+        # Schedule the Google Sheets sync
+        order_details = db.get_order_details(order_ref)
+        if order_details and context.application.job_queue:
+             context.application.job_queue.run_once(services.sync_order_to_sheet, when=0, data=order_details)
 
-#     elif action == "reject":
-#         db.update_order_status(order_ref, 'rejected')
+    elif action == "reject":
+        db.update_order_status(order_ref, 'rejected')
 
-#         await customer_app.bot.send_message(
-#             chat_id=customer_chat_id,
-#             text=f"😥 We are very sorry, but your order *#{order_ref}* has been *REJECTED* by the restaurant. This may be due to an issue with payment verification or an item being out of stock. Please contact the restaurant directly or start a new order with /start.",
-#             parse_mode='Markdown'
-#         )
+        await customer_app.bot.send_message(
+            chat_id=customer_chat_id,
+            text=f"😥 We are very sorry, but your order *#{order_ref}* has been *REJECTED* by the restaurant. This may be due to an issue with payment verification or an item being out of stock. Please contact the restaurant directly or start a new order with /start.",
+            parse_mode='Markdown'
+        )
         
-#         new_caption = query.message.caption + f"\n\n--- \n❌ *Rejected* by {admin_user} ---"
-#         await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
-#         print(f"LOG: Order {order_ref} rejected by {admin_user}.")
+        new_caption = query.message.caption + f"\n\n--- \n❌ *Rejected* by {admin_user} ---"
+        await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
+        print(f"LOG: Order {order_ref} rejected by {admin_user}.")
 
-# def setup_restaurant_bot_handlers(application: Application, customer_app: Application):
-#     """Sets up the handlers for the restaurant bot."""
-#     application.bot_data['customer_app'] = customer_app
+def setup_restaurant_bot_handlers(application: Application, customer_app: Application):
+    """Sets up the handlers for the restaurant bot."""
+    application.bot_data['customer_app'] = customer_app
     
-#     application.add_handler(CallbackQueryHandler(handle_order_action, pattern=r"^(confirm_|reject_)"))
+    application.add_handler(CallbackQueryHandler(handle_order_action, pattern=r"^(confirm_|reject_)"))
 
 
 
@@ -143,77 +143,77 @@
 
 
 
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CallbackQueryHandler, ContextTypes, CommandHandler # Import CommandHandler
-import database_manager as db
-import services
+# from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+# from telegram.ext import Application, CallbackQueryHandler, ContextTypes, CommandHandler # Import CommandHandler
+# import database_manager as db
+# import services
 
-async def get_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """A temporary command handler to get the chat ID."""
-    chat_id = update.effective_chat.id
-    message = f"✅ The `RESTAURANT_CHAT_ID` for this group is:\n\n`{chat_id}`\n\nCopy this ID into your `.env` file and then remove this temporary command."
+# async def get_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     """A temporary command handler to get the chat ID."""
+#     chat_id = update.effective_chat.id
+#     message = f"✅ The `RESTAURANT_CHAT_ID` for this group is:\n\n`{chat_id}`\n\nCopy this ID into your `.env` file and then remove this temporary command."
     
-    print(f"Received /get_id command. Chat ID is: {chat_id}") # Prints to your console
-    await update.message.reply_text(message, parse_mode='Markdown') # Sends to the group
+#     print(f"Received /get_id command. Chat ID is: {chat_id}") # Prints to your console
+#     await update.message.reply_text(message, parse_mode='Markdown') # Sends to the group
 
-async def handle_order_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handles the 'Confirm' or 'Reject' button presses from the restaurant staff."""
-    query = update.callback_query
-    await query.answer()
+# async def handle_order_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     """Handles the 'Confirm' or 'Reject' button presses from the restaurant staff."""
+#     query = update.callback_query
+#     await query.answer()
 
-    action, order_ref = query.data.split('_', 1)
-    admin_user = query.from_user.full_name
+#     action, order_ref = query.data.split('_', 1)
+#     admin_user = query.from_user.full_name
 
-    customer_app = context.application.bot_data.get('customer_app')
-    if not customer_app:
-        print("FATAL: Customer app not found in restaurant bot context!")
-        await query.edit_message_caption(caption=query.message.caption + "\n\n❌ ERROR: COULD NOT NOTIFY CUSTOMER.", parse_mode='Markdown')
-        return
+#     customer_app = context.application.bot_data.get('customer_app')
+#     if not customer_app:
+#         print("FATAL: Customer app not found in restaurant bot context!")
+#         await query.edit_message_caption(caption=query.message.caption + "\n\n❌ ERROR: COULD NOT NOTIFY CUSTOMER.", parse_mode='Markdown')
+#         return
 
-    customer_chat_id = db.get_order_customer_id(order_ref)
-    if not customer_chat_id:
-        print(f"ERROR: Could not find customer ID for order {order_ref}")
-        await query.edit_message_caption(caption=query.message.caption + f"\n\n❌ ERROR: Customer ID not found for order {order_ref}.", parse_mode='Markdown')
-        return
+#     customer_chat_id = db.get_order_customer_id(order_ref)
+#     if not customer_chat_id:
+#         print(f"ERROR: Could not find customer ID for order {order_ref}")
+#         await query.edit_message_caption(caption=query.message.caption + f"\n\n❌ ERROR: Customer ID not found for order {order_ref}.", parse_mode='Markdown')
+#         return
 
-    if action == "confirm":
-        db.update_order_status(order_ref, 'confirmed')
+#     if action == "confirm":
+#         db.update_order_status(order_ref, 'confirmed')
         
-        await customer_app.bot.send_message(
-            chat_id=customer_chat_id,
-            text=f"🎉 Great news! Your order *#{order_ref}* has been *CONFIRMED* by the restaurant.\n\nIt's now being prepared and will be with you shortly. Thank you for your order!",
-            parse_mode='Markdown'
-        )
+#         await customer_app.bot.send_message(
+#             chat_id=customer_chat_id,
+#             text=f"🎉 Great news! Your order *#{order_ref}* has been *CONFIRMED* by the restaurant.\n\nIt's now being prepared and will be with you shortly. Thank you for your order!",
+#             parse_mode='Markdown'
+#         )
         
-        new_caption = query.message.caption + f"\n\n--- \n✅ *Confirmed* by {admin_user} ---"
-        await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
-        print(f"LOG: Order {order_ref} confirmed by {admin_user}.")
+#         new_caption = query.message.caption + f"\n\n--- \n✅ *Confirmed* by {admin_user} ---"
+#         await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
+#         print(f"LOG: Order {order_ref} confirmed by {admin_user}.")
 
-        order_details = db.get_order_details(order_ref)
-        if order_details and context.application.job_queue:
-            context.application.job_queue.run_once(services.sync_order_to_sheet, when=0, data=order_details)
+#         order_details = db.get_order_details(order_ref)
+#         if order_details and context.application.job_queue:
+#             context.application.job_queue.run_once(services.sync_order_to_sheet, when=0, data=order_details)
 
-    elif action == "reject":
-        db.update_order_status(order_ref, 'rejected')
+#     elif action == "reject":
+#         db.update_order_status(order_ref, 'rejected')
 
-        await customer_app.bot.send_message(
-            chat_id=customer_chat_id,
-            text=f"😥 We are very sorry, but your order *#{order_ref}* has been *REJECTED* by the restaurant. This may be due to an issue with payment verification or an item being out of stock. Please contact the restaurant directly or start a new order with /start.",
-            parse_mode='Markdown'
-        )
+#         await customer_app.bot.send_message(
+#             chat_id=customer_chat_id,
+#             text=f"😥 We are very sorry, but your order *#{order_ref}* has been *REJECTED* by the restaurant. This may be due to an issue with payment verification or an item being out of stock. Please contact the restaurant directly or start a new order with /start.",
+#             parse_mode='Markdown'
+#         )
         
-        new_caption = query.message.caption + f"\n\n--- \n❌ *Rejected* by {admin_user} ---"
-        await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
-        print(f"LOG: Order {order_ref} rejected by {admin_user}.")
+#         new_caption = query.message.caption + f"\n\n--- \n❌ *Rejected* by {admin_user} ---"
+#         await query.edit_message_caption(caption=new_caption, parse_mode='Markdown', reply_markup=None)
+#         print(f"LOG: Order {order_ref} rejected by {admin_user}.")
 
-def setup_restaurant_bot_handlers(application: Application, customer_app: Application):
-    """Sets up the handlers for the restaurant bot."""
-    application.bot_data['customer_app'] = customer_app
+# def setup_restaurant_bot_handlers(application: Application, customer_app: Application):
+#     """Sets up the handlers for the restaurant bot."""
+#     application.bot_data['customer_app'] = customer_app
     
-    # --- TEMPORARY CODE TO GET CHAT ID ---
-    # This command handler will listen for /get_id in your group
-    application.add_handler(CommandHandler("get_id", get_id))
-    # ------------------------------------
+#     # --- TEMPORARY CODE TO GET CHAT ID ---
+#     # This command handler will listen for /get_id in your group
+#     application.add_handler(CommandHandler("get_id", get_id))
+#     # ------------------------------------
     
-    # This handler processes the 'Confirm'/'Reject' buttons
-    application.add_handler(CallbackQueryHandler(handle_order_action, pattern=r"^(confirm_|reject_)"))
+#     # This handler processes the 'Confirm'/'Reject' buttons
+#     application.add_handler(CallbackQueryHandler(handle_order_action, pattern=r"^(confirm_|reject_)"))
